@@ -50,8 +50,15 @@ class map extends baseObject
                             height: g.tileSize
                             fromCenter: false
 
+        canvas.drawArc
+            fillStyle: "#FF0"
+            x: input.mouseX
+            y: input.mouseY
+            radius: 4
+
+
         x1 = 100
-        y1 = 100
+        y1 = 75
         x2 = input.mouseX
         y2 = input.mouseY
 
@@ -80,18 +87,44 @@ class map extends baseObject
             maxY = ((y + (vy > 0 && 1 || 0)) * g.tileSize - y1) / vy
             deltaY = Math.abs(g.tileSize / vy)
 
+        canvas
+            .drawLine
+                strokeStyle: "#000"
+                strokeWidth: 1
+                x1: x1
+                y1: y1
+                x2: input.mouseX
+                y2: input.mouseY
+
         count = 0
         while (x != ox || y != oy) && count < 50
 
             count++
+
+            if maxX < maxY
+                maxX = maxX + deltaX
+                x += stepX
+            else
+                maxY = maxY + deltaY
+                y += stepY
+
+            canvas
+                .drawRect
+                    fillStyle: "rgba(255,0,0,0.5)"
+                    x: @x + x * g.tileSize
+                    y: @y + y * g.tileSize
+                    width: g.tileSize
+                    height: g.tileSize
+                    fromCenter: false
 
             if loadedMap[y]? && loadedMap[y][x] == 1
                 # y = mx + b
                 # find the intersection between ray and tile
                 
                 initPoint = point( x1, y1 )
+                endPoint = point( x2, y2 )
 
-                iPoint = point( 0, 0 )
+                #iPoint = point( 0, 0 )
 
                 mA = vy/vx
                 mB = vx/vy
@@ -104,73 +137,50 @@ class map extends baseObject
                 upSide = y * g.tileSize
                 downSide = upSide + g.tileSize
 
-                upSideTest = (upSide - bA) * mB
-                if upSideTest >= leftSide and upSideTest <= rightSide
-                    iPoint = point( upSideTest, upSide )
-                    canvas.drawArc
-                        fillStyle: "black"
-                        x: upSideTest
-                        y: upSide
-                        radius: 4
-                leftSideTest = mA * leftSide + bA
-                if leftSideTest >= upSide and leftSideTest <= downSide
-                    newPoint = point(leftSide, leftSideTest)
-                    canvas.drawArc
-                        fillStyle: "black"
-                        x: leftSide
-                        y: leftSideTest
-                        radius: 4
-                    if iPoint.distance(initPoint) > newPoint.distance( initPoint )
-                        iPoint = newPoint
-                rightSideTest = mA * rightSide + bA
-                if rightSideTest >= upSide and rightSideTest <= downSide
-                    newPoint = point( rightSide, rightSideTest )
-                    canvas.drawArc
-                        fillStyle: "black"
-                        x: rightSide
-                        y: rightSideTest
-                        radius: 4
-                    if iPoint.distance(initPoint) > newPoint.distance( initPoint )
-                        iPoint = newPoint
-                downSideTest = (downSide - bA) * mB
-                if downSideTest >= leftSide and downSideTest <= rightSide
-                    newPoint = point( downSideTest, downSide )
-                    if iPoint.distance(initPoint) > newPoint.distance( initPoint )
-                        iPoint = newPoint
+                topLeft = point( leftSide, upSide )
+                bottomLeft = point( leftSide, downSide )
+                topRight = point( rightSide, upSide )
+                bottomRight = point( rightSide, downSide )
+
+                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topLeft, bottomLeft )
+                if tempPoint?
+                    iPoint = tempPoint
+                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topRight, bottomRight )
+                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                    iPoint = tempPoint
+                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topLeft, topRight )
+                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                    iPoint = tempPoint
+                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, bottomLeft, bottomRight )
+                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                    iPoint = tempPoint
 
                 canvas
-                    .drawLine
-                        strokeStyle: "#000"
-                        strokeWidth: 1
-                        x1: x1
-                        y1: y1
-                        x2: iPoint.x
-                        y2: iPoint.y
-                return
+                    .drawRect
+                        fillStyle: "rgba(255,20,255,0.5)"
+                        x: @x + x * g.tileSize
+                        y: @y + y * g.tileSize
+                        width: g.tileSize
+                        height: g.tileSize
+                        fromCenter: false
 
-            if maxX < maxY
-                maxX = maxX + deltaX
-                x += stepX
-            else
-                maxY = maxY + deltaY
-                y += stepY
 
-            canvas
-                .drawRect
-                    fillStyle: "#F00"
-                    x: @x + x * g.tileSize
-                    y: @y + y * g.tileSize
-                    width: g.tileSize
-                    height: g.tileSize
-                    fromCenter: false
-        canvas
-            .drawLine
-                strokeStyle: "#000"
-                strokeWidth: 1
-                x1: x1
-                y1: y1
-                x2: input.mouseX
-                y2: input.mouseY
+                if iPoint?
+                    canvas.drawArc
+                        fillStyle: "#0F0"
+                        x: iPoint.x
+                        y: iPoint.y
+                        radius: 4
+
+                    canvas
+                        .drawLine
+                            strokeStyle: "#000"
+                            strokeWidth: 1
+                            x1: x1
+                            y1: y1
+                            x2: iPoint.x
+                            y2: iPoint.y
+                    return
 
 module.exports = map
 

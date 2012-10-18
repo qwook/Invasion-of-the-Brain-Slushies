@@ -1,5 +1,5 @@
 
-require( "./point" )
+point = require( "./point" )
 
 # extend the Math library.
 
@@ -26,7 +26,7 @@ Math.rayToRayIntersection = ( p1, p2, p3, p4 ) ->
         if (d != 0)
             r = (((p1.y - p3.y) * (p4.x - p3.x)) - (p1.x - p3.x) * (p4.y - p3.y)) / d
             s = (((p1.y - p3.y) * (p2.x - p1.x)) - (p1.x - p3.x) * (p2.y - p1.y)) / d
-            if (r >= 0)
-                if (s >= 0)
+            if (r >= 0 && r <= 1)
+                if (s >= 0 && s <= 1)
                     return point( p1.x + r * (p2.x - p1.x), p1.y + r * (p2.y - p1.y) )
 

@@ -98,4 +98,4 @@ setInterval( think, 0 )
 render(0)
 input.setThink( think )
 game.initialize()
-
+canvas.css('cursor','none')
