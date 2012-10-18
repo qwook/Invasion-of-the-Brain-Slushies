@@ -80,11 +80,11 @@ class CGame
         @missileFired = false
         @stage = STAGE_LOBBY
 
-        new map()
+        # create our map and hold it somewhere.
+        @map = new map()
 
         # create our player and hold it somewhere.
         @player = new CPlayer()
-
 
 # create an instance of the CGame class and export it.
 

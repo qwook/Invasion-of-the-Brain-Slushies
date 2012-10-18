@@ -2,6 +2,7 @@
 input       = require("../input")
 baseObject  = require("./baseObject")
 g           = require("../globals")
+game        = require("../game")
 point       = require("../point")
 
 canvas = $("#canvas")
@@ -37,30 +38,12 @@ loadedMap =
 class map extends baseObject
     className: "map"
     initialize: ->
-    render: () ->
-        for v, y in loadedMap
-            for tile, x in v
-                if tile == 1
-                    canvas
-                        .drawRect
-                            fillStyle: "#000"
-                            x: @x + x * g.tileSize
-                            y: @y + y * g.tileSize
-                            width: g.tileSize
-                            height: g.tileSize
-                            fromCenter: false
+    trace: ( pA, pB )->
 
-        canvas.drawArc
-            fillStyle: "#FF0"
-            x: input.mouseX
-            y: input.mouseY
-            radius: 4
-
-
-        x1 = 100
-        y1 = 75
-        x2 = input.mouseX
-        y2 = input.mouseY
+        x1 = pA.x
+        y1 = pA.y
+        x2 = pB.x
+        y2 = pB.y
 
         vx = x2 - x1
         vy = y2 - y1
@@ -87,44 +70,21 @@ class map extends baseObject
             maxY = ((y + (vy > 0 && 1 || 0)) * g.tileSize - y1) / vy
             deltaY = Math.abs(g.tileSize / vy)
 
-        canvas
-            .drawLine
-                strokeStyle: "#000"
-                strokeWidth: 1
-                x1: x1
-                y1: y1
-                x2: input.mouseX
-                y2: input.mouseY
-
         count = 0
-        while (x != ox || y != oy) && count < 50
+        while ((x != ox || y != oy) && count < 50 || count == 0)
 
-            count++
-
-            if maxX < maxY
-                maxX = maxX + deltaX
-                x += stepX
-            else
-                maxY = maxY + deltaY
-                y += stepY
-
-            canvas
-                .drawRect
-                    fillStyle: "rgba(255,0,0,0.5)"
-                    x: @x + x * g.tileSize
-                    y: @y + y * g.tileSize
-                    width: g.tileSize
-                    height: g.tileSize
-                    fromCenter: false
+            if count != 0
+                if maxX < maxY
+                    maxX = maxX + deltaX
+                    x += stepX
+                else
+                    maxY = maxY + deltaY
+                    y += stepY
 
             if loadedMap[y]? && loadedMap[y][x] == 1
-                # y = mx + b
-                # find the intersection between ray and tile
-                
+
                 initPoint = point( x1, y1 )
                 endPoint = point( x2, y2 )
-
-                #iPoint = point( 0, 0 )
 
                 mA = vy/vx
                 mB = vx/vy
@@ -142,45 +102,58 @@ class map extends baseObject
                 topRight = point( rightSide, upSide )
                 bottomRight = point( rightSide, downSide )
 
-                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topLeft, bottomLeft )
-                if tempPoint?
-                    iPoint = tempPoint
-                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topRight, bottomRight )
-                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
-                    iPoint = tempPoint
-                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, topLeft, topRight )
-                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
-                    iPoint = tempPoint
-                tempPoint = Math.rayToRayIntersection( initPoint, endPoint, bottomLeft, bottomRight )
-                if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
-                    iPoint = tempPoint
-
-                canvas
-                    .drawRect
-                        fillStyle: "rgba(255,20,255,0.5)"
-                        x: @x + x * g.tileSize
-                        y: @y + y * g.tileSize
-                        width: g.tileSize
-                        height: g.tileSize
-                        fromCenter: false
-
+                if ( x1 <= x2 )
+                    tempPoint = Math.lineToRayIntersection( initPoint, endPoint, topLeft, bottomLeft )
+                    if tempPoint?
+                        iPoint = tempPoint
+                else
+                    tempPoint = Math.lineToRayIntersection( initPoint, endPoint, topRight, bottomRight )
+                    if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                        iPoint = tempPoint
+                if ( y1 <= y2 )
+                    tempPoint = Math.lineToRayIntersection( initPoint, endPoint, topLeft, topRight )
+                    if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                        iPoint = tempPoint
+                else
+                    tempPoint = Math.lineToRayIntersection( initPoint, endPoint, bottomLeft, bottomRight )
+                    if tempPoint? && (!iPoint? || tempPoint.distance( initPoint ) < iPoint.distance( initPoint ))
+                        iPoint = tempPoint
 
                 if iPoint?
-                    canvas.drawArc
-                        fillStyle: "#0F0"
-                        x: iPoint.x
-                        y: iPoint.y
-                        radius: 4
+                    return iPoint
 
+            count++
+
+        
+
+    render: () ->
+        for v, y in loadedMap
+            for tile, x in v
+                if tile == 1
                     canvas
-                        .drawLine
-                            strokeStyle: "#000"
-                            strokeWidth: 1
-                            x1: x1
-                            y1: y1
-                            x2: iPoint.x
-                            y2: iPoint.y
-                    return
+                        .drawRect
+                            fillStyle: "#000"
+                            x: @x + x * g.tileSize
+                            y: @y + y * g.tileSize
+                            width: g.tileSize
+                            height: g.tileSize
+                            fromCenter: false
+
+        canvas.drawArc
+            fillStyle: "#FF0"
+            x: input.mouseX
+            y: input.mouseY
+            radius: 4
+
+        ###iPoint = @trace( point( game.player.x, game.player.y ), point( input.mouseX, input.mouseY ) )
+
+        if iPoint?
+            console.log(iPoint.y)
+            canvas.drawArc
+                fillStyle: "#0F0"
+                x: iPoint.x
+                y: iPoint.y
+                radius: 4###
 
 module.exports = map
 
